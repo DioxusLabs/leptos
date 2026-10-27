@@ -90,6 +90,15 @@ fn click(doc: &mut LeptosDocument, selector: &str) {
     doc.poll(None);
 }
 
+fn assert_checkbox_images(doc: &LeptosDocument) {
+    for id in doc.dom.query_selector_all(".todo-list > li label").unwrap() {
+        let element = doc.dom.get_node(id).unwrap().element_data().unwrap();
+        let image = element.background_images[0].as_ref().unwrap();
+        assert_eq!(image.status, blitz_dom::node::Status::Ok);
+        assert!(matches!(image.image, blitz_dom::node::ImageData::Svg(_)));
+    }
+}
+
 fn edit(doc: &mut LeptosDocument, selector: &str) -> NodeId {
     let label = query(doc, selector);
     let data = doc
@@ -123,6 +132,7 @@ fn todos_add_toggle_filter_edit_and_clear() {
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("output");
     std::fs::create_dir_all(&output).unwrap();
     common::snapshot(&mut doc, &output, "todomvc-before");
+    assert_checkbox_images(&doc);
 
     click(&mut doc, ".todo:first-child .toggle");
     count(&doc, "2 items left");
@@ -141,6 +151,7 @@ fn todos_add_toggle_filter_edit_and_clear() {
     assert_eq!(doc.dom.url().fragment(), Some("/completed"));
     count(&doc, "2 items left");
     common::snapshot(&mut doc, &output, "todomvc-completed");
+    assert_checkbox_images(&doc);
     click(&mut doc, "a[href='#/']");
 
     let input = edit(&mut doc, ".todo:nth-child(2) label");

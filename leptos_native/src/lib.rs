@@ -104,6 +104,7 @@ impl LeptosDocument {
              id='app'></main></body></html>",
             DocumentConfig {
                 html_parser_provider: Some(Arc::new(blitz_html::HtmlProvider)),
+                net_provider: Some(blitz_shell::DataUriNetProvider::shared(None)),
                 viewport: Some(Viewport::new(
                     640,
                     160,
@@ -179,6 +180,9 @@ impl LeptosDocument {
     /// Resolves styles/layout and paints to a PNG without opening a window or GPU.
     pub fn render_png(&mut self, path: impl AsRef<Path>) {
         use anyrender::PaintScene;
+        self.poll(None);
+        self.dom.resolve(0.0);
+        // Data URI decoding is synchronous; ingest the responses queued by style resolution.
         self.dom.resolve(0.0);
         let (width, height) = self.dom.viewport().window_size;
         let scale = self.dom.viewport().scale_f64();

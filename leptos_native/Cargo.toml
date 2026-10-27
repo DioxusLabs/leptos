@@ -11,7 +11,8 @@ rust-version = "1.91.0"
 publish = false
 
 [features]
-native = ["dep:leptos", "dep:any_spawner", "dep:blitz-dom", "dep:blitz-html", "dep:blitz-shell", "dep:blitz-paint", "dep:blitz-traits", "dep:anyrender", "dep:anyrender_vello_cpu", "dep:peniko", "dep:png"]
+native = ["svg", "dep:leptos", "dep:any_spawner", "dep:blitz-dom", "dep:blitz-html", "dep:blitz-shell", "dep:blitz-paint", "dep:blitz-traits", "dep:anyrender", "dep:anyrender_vello_cpu", "dep:peniko", "dep:png"]
+svg = ["blitz-dom?/svg", "blitz-paint?/svg"]
 auto-launch = ["native", "dep:inventory"]
 
 [dependencies]
@@ -20,7 +21,7 @@ leptos = { workspace = true, features = ["native"], optional = true }
 any_spawner = { workspace = true, optional = true }
 blitz-dom = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, features = ["system-fonts"], optional = true }
 blitz-html = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, optional = true }
-blitz-shell = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, optional = true }
+blitz-shell = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, features = ["data-uri"], optional = true }
 blitz-paint = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, optional = true }
 blitz-traits = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", optional = true }
 anyrender = { version = "0.14", optional = true }

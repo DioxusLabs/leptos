@@ -77,12 +77,16 @@ not Blitz bugs. The previous native stylesheet invented those appearances.
 
 ### TodoMVC
 
-- **Checkbox circles/checkmarks absent.** Their labels use percent-encoded
-  `data:image/svg+xml` CSS `background-image` URLs; the real input is hidden
-  with `opacity: 0`. This is also a host integration gap: `LeptosDocument`
-  supplies no resource provider, so Blitz defaults to `DummyNetProvider`,
-  whose `fetch` does nothing. Do not report this as a proven SVG painter bug
-  without retesting with a functioning resource provider.
+SVG data-URI backgrounds now load in both windowed and headless rendering.
+The host enables Blitz's SVG decoder/painter and synchronous data-URI provider;
+headless painting resolves styles, then ingests the resulting image responses
+before painting. The tests assert decoded SVG backgrounds in both the initial
+and Completed-filter snapshots. External HTTP/file resources remain unsupported.
+
+- **Completed checkbox keeps the unchecked circle.** The circle now renders,
+  but the Completed-filter snapshot still lacks Chrome's green checkmark.
+  Investigate `.toggle:checked + label` state/style invalidation; this is no
+  longer an absent resource-provider or disabled-SVG issue.
 - **Input placeholder absent.** Chrome displays the italic "What needs to be
   done?" text. Investigate placeholder text painting and the stylesheet's
   `::-webkit-input-placeholder` styling.
