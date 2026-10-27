@@ -96,11 +96,7 @@ pub fn event_target_value(event: &crate::renderer::native::Event) -> String {
     event.target().unwrap().value()
 }
 #[cfg(feature = "native")]
-/// Reads the target's checked attribute.
+/// Reads the target's live checked state.
 pub fn event_target_checked(event: &crate::renderer::native::Event) -> bool {
-    event
-        .target()
-        .unwrap()
-        .get_attribute("checked")
-        .is_some_and(|v| v != "false")
+    event.target().unwrap().checked()
 }

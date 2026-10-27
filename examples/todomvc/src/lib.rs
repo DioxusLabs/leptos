@@ -1,15 +1,18 @@
-use leptos::{ev, html::Input, prelude::*};
+use leptos::{ev, ev::KeyboardEvent, html::Input, prelude::*};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use web_sys::KeyboardEvent;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Todos(pub Vec<Todo>);
 
+#[cfg(not(feature = "native"))]
 const STORAGE_KEY: &str = "todos-leptos";
 
 impl Default for Todos {
     fn default() -> Self {
+        #[cfg(feature = "native")]
+        let starting_todos = Vec::new();
+        #[cfg(not(feature = "native"))]
         let starting_todos =
             window()
                 .local_storage()
@@ -194,6 +197,7 @@ pub fn TodoMVC() -> impl IntoView {
     // this is the main point of effects: to synchronize reactive state
     // with something outside the reactive system (like localStorage)
 
+    #[cfg(not(feature = "native"))]
     Effect::new(move |_| {
         if let Ok(Some(storage)) = window().local_storage() {
             let json = serde_json::to_string(&todos)
@@ -335,7 +339,7 @@ pub fn Todo(todo: Todo) -> impl IntoView {
                 editing
                     .get()
                     .then(|| {
-                        view! {
+                        let input = view! {
                             <input
                                 class="edit"
                                 class:hidden=move || !editing.get()
@@ -350,7 +354,19 @@ pub fn Todo(todo: Todo) -> impl IntoView {
                                     }
                                 }
                             />
+                        };
+                        #[cfg(feature = "native")]
+                        {
+                            let edit_ref = NodeRef::<Input>::new();
+                            Effect::new(move |_| {
+                                if let Some(input) = edit_ref.get() {
+                                    _ = input.focus();
+                                }
+                            });
+                            input.into_inner().node_ref(edit_ref)
                         }
+                        #[cfg(not(feature = "native"))]
+                        { input }
                     })
             }}
 

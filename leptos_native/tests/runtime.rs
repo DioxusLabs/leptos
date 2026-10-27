@@ -129,3 +129,66 @@ fn static_html_svg_and_inner_html() {
         assert_eq!(Rndr::create_element("div", None).tag_name(), "DIV");
     });
 }
+
+#[test]
+fn hash_links_focus_and_live_checked_properties() {
+    let hashes = Rc::new(Cell::new(0));
+    let changes = Rc::new(Cell::new(0));
+    let blurs = Rc::new(Cell::new(0));
+    let handle = Rc::new(std::cell::RefCell::new(None));
+    let mut doc = LeptosDocument::new({
+        let hashes = hashes.clone();
+        let changes = changes.clone();
+        let blurs = blurs.clone();
+        let handle = handle.clone();
+        move || {
+            *handle.borrow_mut() =
+                Some(window_event_listener(ev::hashchange, move |_| {
+                    hashes.set(hashes.get() + 1);
+                    assert_eq!(location_hash().as_deref(), Some("/active"));
+                }));
+            view! {
+                <input id="first" on:focusout=move |_| blurs.set(blurs.get() + 1) />
+                <input id="second" />
+                <input id="checked" type="checkbox" prop:checked=false on:change=move |event| {
+                    assert!(event_target_checked(&event));
+                    changes.set(changes.get() + 1);
+                } />
+                <a href="#/active">"Active"</a>
+                <a href="#/blocked" on:click=move |event| event.prevent_default()>"Blocked"</a>
+            }
+        }
+    });
+    let first = doc.dom.query_selector("#first").unwrap().unwrap();
+    let second = doc.dom.query_selector("#second").unwrap().unwrap();
+    native::with_document(&mut doc.dom, || {
+        Node(first).focus().unwrap();
+        Node(second).focus().unwrap();
+        assert_eq!(blurs.get(), 1);
+    });
+    assert_eq!(doc.dom.get_focussed_node_id(), Some(second));
+    let checked = doc.dom.query_selector("#checked").unwrap().unwrap();
+    native::with_document(&mut doc.dom, || assert!(!Node(checked).checked()));
+    doc.dom.resolve(0.0);
+    native::with_document(&mut doc.dom, || assert!(!Node(checked).checked()));
+    doc.click(checked);
+    assert_eq!(changes.get(), 1);
+    native::with_document(&mut doc.dom, || {
+        assert!(Node(checked).checked());
+        Rndr::set_property(&Node(checked), "checked", &false.into());
+        assert!(!Node(checked).checked());
+    });
+    let active = doc.find_by_text("a", "Active").unwrap();
+    doc.click(active);
+    doc.click(active);
+    doc.click(doc.find_by_text("a", "Blocked").unwrap());
+    assert_eq!(hashes.get(), 1);
+    assert_eq!(doc.dom.url().fragment(), Some("/active"));
+    handle.borrow_mut().take().unwrap().remove();
+    native::with_document(&mut doc.dom, || native::navigate_hash("/completed"));
+    assert_eq!(hashes.get(), 1);
+    let mut other = LeptosDocument::new(|| ());
+    native::with_document(&mut other.dom, || {
+        assert_eq!(location_hash().as_deref(), Some(""))
+    });
+}

@@ -159,6 +159,11 @@ impl LeptosDocument {
             ),
         );
     }
+    /// Dispatches a synthetic native DOM event with Blitz's default actions.
+    pub fn dispatch_event(&mut self, target: NodeId, data: DomEventData) {
+        EventDriver::new(self, LeptosEventHandler)
+            .handle_dom_event(DomEvent::new(target, data));
+    }
     pub fn find_by_text(&self, tag: &str, text: &str) -> Option<NodeId> {
         find_node(&self.dom, self.root, &|node| {
             node.data
@@ -294,7 +299,41 @@ impl EventHandler for LeptosEventHandler {
         let doc = (doc as &mut dyn std::any::Any)
             .downcast_mut::<LeptosDocument>()
             .expect("Leptos event handler requires a LeptosDocument");
-        scoped(&mut doc.dom, &doc.tasks, || native::dispatch(chain, &event));
+        scoped(&mut doc.dom, &doc.tasks, || {
+            native::dispatch(chain, &event);
+            if matches!(event.data, DomEventData::Input(_)) {
+                let target = event.target().unwrap();
+                if target.tag_name() == "SELECT"
+                    || matches!(
+                        target.get_attribute("type").as_deref(),
+                        Some("checkbox" | "radio")
+                    )
+                {
+                    native::dispatch(
+                        chain,
+                        &Event::new(target.0, event.data.clone())
+                            .with_name("change"),
+                    );
+                }
+            }
+            if matches!(event.data, DomEventData::Click(_))
+                && !event.default_prevented()
+            {
+                for &id in chain {
+                    let node = Node(id);
+                    if node.node_type() == 1 && node.tag_name() == "A" {
+                        if let Some(href) = node
+                            .get_attribute("href")
+                            .filter(|href| href.starts_with('#'))
+                        {
+                            event.prevent_default();
+                            native::navigate_hash(&href);
+                        }
+                        break;
+                    }
+                }
+            }
+        });
         if event.default_prevented() {
             state.prevent_default();
         }

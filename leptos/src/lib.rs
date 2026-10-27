@@ -191,6 +191,10 @@ pub mod prelude {
             self,
             error::{FromServerFnError, ServerFnError, ServerFnErrorErr},
         };
+        #[cfg(feature = "native")]
+        pub use tachys::renderer::native::{
+            WindowListenerHandle, location_hash, window_event_listener,
+        };
         pub use tachys::{
             reactive_graph::{Suspend, bind::BindAttribute, node_ref::*},
             view::{fragment::Fragment, template::ViewTemplate},

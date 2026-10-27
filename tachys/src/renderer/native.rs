@@ -3,7 +3,10 @@
 use super::{CastFrom, RemoveEventHandler};
 use crate::view::{Mountable, ToTemplate};
 use blitz_dom::{BaseDocument, QualName};
-use blitz_traits::{events::DomEventData, node_id::NodeId};
+use blitz_traits::{
+    events::{BlitzFocusEvent, DomEventData},
+    node_id::NodeId,
+};
 use std::{
     borrow::Cow,
     cell::{Cell, RefCell},
@@ -70,6 +73,7 @@ fn document<T>(f: impl FnOnce(&mut BaseDocument) -> T) -> T {
 #[derive(Debug, Clone)]
 pub struct Event {
     pub data: DomEventData,
+    name: &'static str,
     target: Node,
     prevented: Rc<Cell<bool>>,
     stopped: Rc<Cell<bool>>,
@@ -77,6 +81,7 @@ pub struct Event {
 impl Event {
     pub fn new(target: NodeId, data: DomEventData) -> Self {
         Self {
+            name: data.name(),
             data,
             target: Node(target),
             prevented: Default::default(),
@@ -98,6 +103,41 @@ impl Event {
     pub fn propagation_stopped(&self) -> bool {
         self.stopped.get()
     }
+    pub fn with_name(mut self, name: &'static str) -> Self {
+        self.name = name;
+        self
+    }
+    pub fn key(&self) -> String {
+        match &self.data {
+            DomEventData::KeyDown(event)
+            | DomEventData::KeyUp(event)
+            | DomEventData::KeyPress(event) => event.key.to_string(),
+            _ => String::new(),
+        }
+    }
+    pub fn key_code(&self) -> u32 {
+        let key = self.key();
+        match key.as_str() {
+            "Backspace" => 8,
+            "Tab" => 9,
+            "Enter" => 13,
+            "Escape" => 27,
+            " " => 32,
+            "End" => 35,
+            "Home" => 36,
+            "ArrowLeft" => 37,
+            "ArrowUp" => 38,
+            "ArrowRight" => 39,
+            "ArrowDown" => 40,
+            "Delete" => 46,
+            _ if key.len() == 1
+                && key.as_bytes()[0].is_ascii_alphanumeric() =>
+            {
+                key.as_bytes()[0].to_ascii_uppercase() as u32
+            }
+            _ => 0,
+        }
+    }
 }
 
 pub fn dispatch(chain: &[NodeId], event: &Event) {
@@ -105,7 +145,7 @@ pub fn dispatch(chain: &[NodeId], event: &Event) {
     for &node in chain {
         let callbacks = LISTENERS.with_borrow(|listeners| {
             listeners
-                .get(&(doc, node, event.data.name().into()))
+                .get(&(doc, node, event.name.into()))
                 .cloned()
                 .unwrap_or_default()
         });
@@ -116,6 +156,72 @@ pub fn dispatch(chain: &[NodeId], event: &Event) {
             break;
         }
     }
+}
+
+pub fn dispatch_bubbling(event: &Event, bubbles: bool) {
+    let chain = document(|d| {
+        let mut chain = vec![event.target.0];
+        if bubbles {
+            let mut parent =
+                d.get_node(event.target.0).and_then(|node| node.parent);
+            while let Some(id) = parent {
+                chain.push(id);
+                parent = d.get_node(id).and_then(|node| node.parent);
+            }
+        }
+        chain
+    });
+    dispatch(&chain, event);
+}
+
+pub fn location_hash() -> Option<String> {
+    document(|d| Some(d.url().fragment().unwrap_or_default().to_owned()))
+}
+
+pub fn navigate_hash(hash: &str) {
+    let changed = document(|d| {
+        let mut url = d.url().clone();
+        url.set_fragment(Some(hash.trim_start_matches('#')));
+        if &url == d.url() {
+            return None;
+        }
+        d.set_base_url(url.as_str());
+        Some(d.root_node().id)
+    });
+    if let Some(root) = changed {
+        dispatch(
+            &[root],
+            &Event::new(
+                root,
+                DomEventData::Focus(BlitzFocusEvent),
+            )
+            .with_name("hashchange"),
+        );
+    }
+}
+
+pub struct WindowListenerHandle(Box<dyn FnOnce() + Send + Sync>);
+
+impl WindowListenerHandle {
+    pub fn remove(self) {
+        (self.0)();
+    }
+}
+
+pub fn window_event_listener<E: crate::html::event::EventDescriptor + 'static>(
+    event: E,
+    cb: impl Fn(E::EventType) + 'static,
+) -> WindowListenerHandle
+where
+    E::EventType: From<Event>,
+{
+    let root = document(|d| Node(d.root_node().id));
+    let handle = NativeDom::add_event_listener(
+        &root,
+        &event.name(),
+        Box::new(move |event| cb(event.into())),
+    );
+    WindowListenerHandle(handle.into_inner().unwrap())
 }
 
 pub fn dispose_document(id: usize) {
@@ -194,6 +300,53 @@ impl Node {
     }
     pub fn set_value(&self, value: &str) {
         NativeDom::set_property(self, "value", &PropertyValue::from_str(value));
+    }
+    pub fn checked(&self) -> bool {
+        document(|d| {
+            d.get_node(self.0)
+                .and_then(|node| node.element_data())
+                .map(|element| {
+                    element.checkbox_input_checked().unwrap_or_else(|| {
+                        element
+                            .attr(blitz_dom::LocalName::from("checked"))
+                            .is_some_and(|value| value != "false")
+                    })
+                })
+                .unwrap_or(false)
+        })
+    }
+    pub fn focus(&self) -> Result<(), &'static str> {
+        let (old, changed) = document(|d| {
+            let old = d.get_focussed_node_id();
+            (old, d.set_focus_to(self.0))
+        });
+        if changed {
+            if let Some(old) = old {
+                dispatch_bubbling(
+                    &Event::new(old, DomEventData::Blur(BlitzFocusEvent)),
+                    false,
+                );
+                dispatch_bubbling(
+                    &Event::new(old, DomEventData::FocusOut(BlitzFocusEvent)),
+                    true,
+                );
+            }
+            dispatch_bubbling(
+                &Event::new(
+                    self.0,
+                    DomEventData::Focus(BlitzFocusEvent),
+                ),
+                false,
+            );
+            dispatch_bubbling(
+                &Event::new(
+                    self.0,
+                    DomEventData::FocusIn(BlitzFocusEvent),
+                ),
+                true,
+            );
+        }
+        Ok(())
     }
     pub fn tag_name(&self) -> String {
         document(|d| {
@@ -334,6 +487,11 @@ impl NativeDom {
         Self::set_property(el, key, value);
     }
     pub fn set_property(el: &Element, key: &str, value: &PropertyValue) {
+        if key == "checked" && value.0.as_deref() == Some("false") {
+            Self::set_attribute(el, key, "false");
+            Self::remove_attribute(el, key);
+            return;
+        }
         if let Some(value) = &value.0 {
             Self::set_attribute(el, key, value);
         } else {
