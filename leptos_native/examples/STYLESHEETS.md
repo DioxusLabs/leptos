@@ -15,8 +15,12 @@ TodoMVC includes the existing **tracked** files directly, in web order:
 TodoMVC loads `todomvc.css` afterward as a native-only override: filter items
 and links use `inline-block` to work around Blitz's missing inline
 padding/border/margin painting, with negative vertical link margins so the
-boxes don't grow the line box (matching inline layout). The official
-stylesheets and web app are unchanged. Tests require no network.
+boxes don't grow the line box (matching inline layout). `.clear-completed`
+gets `z-index: 1` because Blitz paints and hit-tests the absolutely positioned
+`.filters` (hoisted to its containing block, `.todoapp`) above the
+relatively positioned button; CSS orders `z-index: auto` positioned boxes by
+tree order, which puts the button on top. The official stylesheets and web app
+are unchanged. Tests require no network.
 
 The host enables Blitz's opt-in `floats` feature (`blitz-dom/floats`); without
 it `float` is ignored and floated boxes are laid out as ordinary blocks.

@@ -217,6 +217,31 @@ fn focused_clear_completed_has_no_blitz_keyboard_activation() {
 }
 
 #[test]
+fn pointer_click_hits_clear_completed() {
+    let mut doc = app();
+    add(&mut doc, "Completed todo");
+    doc.dom.resolve(0.0);
+    click(&mut doc, ".toggle");
+    doc.dom.resolve(0.0);
+    let button = query(&doc, ".clear-completed");
+    let mut pointer = doc
+        .dom
+        .get_node(button)
+        .unwrap()
+        .synthetic_click_event_data(Default::default());
+    let hit = doc
+        .dom
+        .hit(pointer.coords.page_x, pointer.coords.page_y)
+        .unwrap();
+    assert_eq!(hit.node_id, button);
+    pointer.buttons = MouseEventButton::Main.into();
+    doc.handle_ui_event(UiEvent::PointerDown(pointer.clone()));
+    pointer.buttons = Default::default();
+    doc.handle_ui_event(UiEvent::PointerUp(pointer));
+    assert!(titles(&doc).is_empty());
+}
+
+#[test]
 fn todos_add_toggle_filter_edit_and_clear() {
     let mut doc = app();
     assert!(titles(&doc).is_empty());
