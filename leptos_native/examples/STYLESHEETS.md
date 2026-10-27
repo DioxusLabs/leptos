@@ -12,7 +12,10 @@ TodoMVC includes the existing **tracked** files directly, in web order:
 - `examples/todomvc/node_modules/todomvc-common/base.css`
 - `examples/todomvc/node_modules/todomvc-app-css/index.css`
 
-Neither app has native-specific CSS overrides. Tests require no network.
+TodoMVC loads `todomvc.css` afterward as a native-only override: filter items
+and links use `inline-block` to work around Blitz's missing inline
+padding/border/margin painting. The official stylesheets and web app are
+unchanged. Tests require no network.
 
 ## Reproduce the comparison
 
@@ -91,8 +94,8 @@ redraw contract, not the OS presentation of the frame.
 ## Visible differences (Chrome 137, Blitz CPU renderer)
 
 These identify the CSS features exercised by the differences, not isolated
-minimal reproductions or proven internal Blitz root causes. No app CSS was
-added to conceal them.
+minimal reproductions or proven internal Blitz root causes. The native-only
+filter override below is the sole app CSS workaround.
 
 ### Benchmark
 
@@ -128,15 +131,17 @@ and Completed-filter snapshots. External HTTP/file resources remain unsupported.
 - **Input placeholder absent.** Chrome displays the italic "What needs to be
   done?" text. Investigate placeholder text painting and the stylesheet's
   `::-webkit-input-placeholder` styling.
-- **Filters run together below the item count; selected outline absent.**
-  Chrome lays out spaced All/Active/Completed links on the footer line with a
-  red selected border. Native loses inline-link margin/padding/border and
-  places the absolutely-positioned `.filters` on a lower static-position line.
-  Investigate inline box decoration and absolute positioning beside floats.
+- **Filter inline padding/border/margin needs an override.** Native-only
+  `todomvc.css` makes the filter items and links `inline-block`, giving them
+  boxes so Blitz can paint the spacing and selected border. This works around
+  unsupported inline box decoration rather than changing the official CSS.
+  The links still sit below the footer line, unlike Chrome; absolute static
+  positioning beside floats remains different.
 - **Clear completed overlaps the filters.** In the Completed-filter native
   snapshot it is painted over the centered links, instead of at the right.
   Its relevant declarations are `float: right; position: relative`, while
   `.todo-count` floats left and `.filters` is absolutely positioned.
+  The inline-block filter override does not fix this overlap; it is left alone.
 - **Toggle-all chevron stays light gray.** Both render the generated rotated
   `label:before` glyph, but native does not show the darker color from
   `.toggle-all:checked + label:before`. Investigate checked-state style

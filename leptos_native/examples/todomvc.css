@@ -1,0 +1,4 @@
+.filters li,
+.filters li a {
+    display: inline-block;
+}

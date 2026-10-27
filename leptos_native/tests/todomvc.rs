@@ -21,6 +21,7 @@ fn app() -> LeptosDocument {
         view! {
             <style>{include_str!("../../examples/todomvc/node_modules/todomvc-common/base.css")}</style>
             <style>{include_str!("../../examples/todomvc/node_modules/todomvc-app-css/index.css")}</style>
+            <style>{include_str!("../examples/todomvc.css")}</style>
             <todomvc::TodoMVC />
         }
     });
