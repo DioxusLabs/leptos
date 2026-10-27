@@ -114,6 +114,7 @@ impl LeptosDocument {
                     1.0,
                     ColorScheme::Light,
                 )),
+                style_threading: blitz_dom::StyleThreading::Parallel,
                 ..Default::default()
             },
         )
