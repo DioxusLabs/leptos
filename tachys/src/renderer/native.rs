@@ -414,8 +414,9 @@ impl NativeDom {
     pub fn remove_css_property(el: &CssStyleDeclaration, key: &str) {
         document(|d| d.mutate().remove_style_property(el.0, key));
     }
-    pub fn set_inner_html(_el: &Element, _html: &str) {
-        unimplemented!("native inner_html is not supported by this spike")
+    pub fn set_inner_html(el: &Element, html: &str) {
+        Self::clear_children(el);
+        document(|d| d.mutate().set_inner_html(el.0, html));
     }
     pub fn get_template<V: ToTemplate + 'static>() -> TemplateElement {
         unimplemented!("native templates are not supported by this spike")
@@ -423,11 +424,35 @@ impl NativeDom {
     pub fn clone_template(_tpl: &TemplateElement) -> Element {
         unimplemented!("native templates are not supported by this spike")
     }
-    pub fn create_element_from_html(_html: Cow<'static, str>) -> Element {
-        unimplemented!("native HTML templates are not supported by this spike")
+    pub fn create_element_from_html(html: Cow<'static, str>) -> Element {
+        Self::parse_element(html, "template", None)
     }
-    pub fn create_svg_element_from_html(_html: Cow<'static, str>) -> Element {
-        unimplemented!("native SVG templates are not supported by this spike")
+    pub fn create_svg_element_from_html(html: Cow<'static, str>) -> Element {
+        Self::parse_element(html, "svg", Some("http://www.w3.org/2000/svg"))
+    }
+    fn parse_element(
+        html: Cow<'static, str>,
+        context: &str,
+        namespace: Option<&str>,
+    ) -> Element {
+        let container = Self::create_element(context, namespace);
+        document(|d| {
+            let mut m = d.mutate();
+            m.set_inner_html(container.0, &html);
+            let element = m
+                .child_ids(container.0)
+                .into_iter()
+                .find(|id| {
+                    m.doc.get_node(*id).is_some_and(|node| node.is_element())
+                })
+                .expect(
+                    "native static HTML requires an element and a configured \
+                     HTML parser provider",
+                );
+            m.remove_node(element);
+            m.remove_and_drop_node(container.0);
+            Node(element)
+        })
     }
 }
 

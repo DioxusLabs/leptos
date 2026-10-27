@@ -102,6 +102,7 @@ impl LeptosDocument {
             "<!doctype html><html><head></head><body><main \
              id='app'></main></body></html>",
             DocumentConfig {
+                html_parser_provider: Some(Arc::new(blitz_html::HtmlProvider)),
                 viewport: Some(Viewport::new(
                     640,
                     160,

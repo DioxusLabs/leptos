@@ -1,0 +1,25 @@
+/* Local presentation for the native host; no CDN or icon font is required. */
+body { font-family: sans-serif; margin: 16px; }
+.container { max-width: 960px; margin: auto; }
+.jumbotron { background: #eee; padding: 16px; }
+.row { display: flex; flex-wrap: wrap; }
+.col-md-6 { width: 50%; }
+.col-sm-6 { width: 50%; }
+.smallpad { padding: 4px; box-sizing: border-box; }
+.btn { width: 100%; padding: 8px; background: #337ab7; color: white; border: 1px solid #286090; }
+.table { width: 100%; border-collapse: collapse; }
+td { padding: 6px; border-top: 1px solid #ddd; }
+td.col-md-1 { width: 10%; }
+td.col-md-4 { width: 40%; }
+td.col-md-6 { width: 40%; }
+tr.danger { background: gold; }
+a { cursor: pointer; color: #286090; }
+.glyphicon-remove {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    background:
+        linear-gradient(45deg, transparent 43%, #a22 43%, #a22 57%, transparent 57%),
+        linear-gradient(-45deg, transparent 43%, #a22 43%, #a22 57%, transparent 57%);
+}
+.preloadicon { display: none; }

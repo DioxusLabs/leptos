@@ -5,14 +5,16 @@ use super::{
 use crate::{
     html::attribute::{Attribute, any_attribute::AnyAttribute},
     hydration::Cursor,
-    renderer::Rndr,
 };
+#[cfg(not(feature = "native"))]
+use crate::renderer::Rndr;
 
 /// A view wrapper that uses a `<template>` node to optimize DOM node creation.
 ///
 /// Rather than creating all of the DOM nodes each time it is built, this template will create a
 /// single `<template>` node once, then use `.cloneNode(true)` to clone that entire tree, and
 /// hydrate it to add event listeners and interactivity for this instance.
+/// With the native renderer, this builds the view directly instead.
 pub struct ViewTemplate<V> {
     view: V,
 }
@@ -26,6 +28,7 @@ where
         Self { view }
     }
 
+    #[cfg(not(feature = "native"))]
     fn to_template() -> crate::renderer::types::TemplateElement {
         Rndr::get_template::<V>()
     }
@@ -41,10 +44,17 @@ where
     // TODO try_build/try_rebuild()
 
     fn build(self) -> Self::State {
-        let tpl = Self::to_template();
-        let contents = Rndr::clone_template(&tpl);
-        self.view
-            .hydrate::<false>(&Cursor::new(contents), &Default::default())
+        #[cfg(feature = "native")]
+        {
+            self.view.build()
+        }
+        #[cfg(not(feature = "native"))]
+        {
+            let tpl = Self::to_template();
+            let contents = Rndr::clone_template(&tpl);
+            self.view
+                .hydrate::<false>(&Cursor::new(contents), &Default::default())
+        }
     }
 
     fn rebuild(self, state: &mut Self::State) {

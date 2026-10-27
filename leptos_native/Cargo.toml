@@ -20,6 +20,7 @@ png = "0.18"
 [dev-dependencies]
 counter = { path = "../examples/counter" }
 counters = { path = "../examples/counters" }
+js-framework-benchmark-leptos = { path = "../examples/js-framework-benchmark" }
 
 [workspace]
 

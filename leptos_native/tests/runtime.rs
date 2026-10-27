@@ -93,3 +93,39 @@ fn documents_have_independent_tasks_and_listeners() {
     second.poll(None);
     assert!(second.text().contains("Value: 0!"));
 }
+
+#[test]
+fn static_html_svg_and_inner_html() {
+    let mut doc = LeptosDocument::new(|| ());
+    native::with_document(&mut doc.dom, || {
+        for tag in ["div", "td", "tr", "tbody"] {
+            let element = Rndr::create_element_from_html(
+                format!("<{tag}>hello &amp; goodbye</{tag}>").into(),
+            );
+            assert_eq!(element.tag_name(), tag.to_uppercase());
+            if tag == "div" || tag == "td" {
+                assert_eq!(
+                    element.text_content().as_deref(),
+                    Some("hello & goodbye")
+                );
+            }
+        }
+        let svg = Rndr::create_svg_element_from_html("<circle r='5'/>".into());
+        assert_eq!(svg.tag_name(), "CIRCLE");
+        assert_eq!(svg.get_attribute("r").as_deref(), Some("5"));
+        let element = Rndr::create_element("div", None);
+        Rndr::set_inner_html(&element, "<strong>hello &amp; goodbye</strong>");
+        assert_eq!(element.text_content().as_deref(), Some("hello & goodbye"));
+        let old_child = Rndr::first_child(&element).unwrap();
+        Rndr::set_inner_html(&element, "");
+        assert_eq!(Rndr::first_child(&element), None);
+        assert_eq!(Rndr::get_parent(&old_child), None);
+        assert!(
+            std::panic::catch_unwind(|| Rndr::create_element_from_html(
+                "".into()
+            ))
+            .is_err()
+        );
+        assert_eq!(Rndr::create_element("div", None).tag_name(), "DIV");
+    });
+}
