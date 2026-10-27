@@ -1,6 +1,7 @@
-//! Experimental Leptos host for Blitz's native DOM and CPU renderer.
+//! Experimental Leptos host for Blitz's native DOM and AnyRender backends.
 #![cfg(feature = "native")]
 
+mod renderer;
 use any_spawner::{CustomExecutor, Executor, PinnedFuture, PinnedLocalFuture};
 use blitz_dom::{
     BaseDocument, DocGuard, DocGuardMut, Document, DocumentConfig, EventDriver,
@@ -15,6 +16,7 @@ use leptos::{
     prelude::*,
     tachys::renderer::native::{self, Event, Node},
 };
+pub use renderer::{LeptosNativeWindowRenderer, RendererOptions};
 use std::{
     cell::{Cell, RefCell},
     path::Path,
@@ -365,7 +367,11 @@ fn launch_registered(app: leptos::mount::NativeApp) {
     launch(app);
 }
 
-/// Opens a native Blitz window using its CPU softbuffer renderer.
+/// Opens a native Blitz window using the feature-selected renderer.
+///
+/// Without a renderer feature, uses Vello CPU with softbuffer. When multiple
+/// backends are enabled, priority is Vello, Vello Hybrid, Skia GPU, Skia raster,
+/// then Vello CPU. Pixels takes precedence over softbuffer for raster backends.
 ///
 /// Set `LEPTOS_NATIVE_HEADLESS` to a PNG path to render one frame and exit
 /// without creating a window or requiring a display server.
@@ -381,7 +387,7 @@ pub fn launch<V: IntoView + 'static>(app: impl FnOnce() -> V) {
         blitz_shell::BlitzShellProxy::new(event_loop.create_proxy());
     let mut application = blitz_shell::BlitzApplication::new(proxy, receiver);
     let document = LeptosDocument::new(app);
-    let renderer = anyrender_vello_cpu::VelloCpuWindowRenderer::new();
+    let renderer = LeptosNativeWindowRenderer::new();
     application.add_window(blitz_shell::WindowConfig::new(
         Box::new(document),
         renderer,

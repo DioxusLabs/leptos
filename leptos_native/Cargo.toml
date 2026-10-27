@@ -11,9 +11,21 @@ rust-version = "1.91.0"
 publish = false
 
 [features]
-native = ["svg", "dep:leptos", "dep:any_spawner", "dep:blitz-dom", "dep:blitz-html", "dep:blitz-shell", "dep:blitz-paint", "dep:blitz-traits", "dep:anyrender", "dep:anyrender_vello_cpu", "dep:peniko", "dep:png"]
+native = ["svg", "dep:leptos", "dep:any_spawner", "dep:blitz-dom", "dep:blitz-html", "dep:blitz-shell", "dep:blitz-paint", "dep:blitz-traits", "dep:anyrender", "dep:anyrender_vello_cpu", "dep:peniko", "dep:png", "dep:cfg-if"]
 svg = ["blitz-dom?/svg", "blitz-paint?/svg"]
 auto-launch = ["native", "dep:inventory"]
+
+# Renderer features. Native alone uses Vello CPU with softbuffer.
+vello = ["native", "dep:anyrender_vello", "dep:wgpu_context"]
+vello-hybrid = ["native", "dep:anyrender_vello_hybrid", "dep:wgpu_context"]
+skia = ["native", "dep:anyrender_skia"]
+skia-pixels = ["skia-raster-base", "anyrender_skia/pixels_window_renderer"]
+skia-softbuffer = ["skia-raster-base", "anyrender_skia/softbuffer_window_renderer"]
+skia-raster-base = ["native", "dep:anyrender_skia"]
+vello-cpu = ["vello-cpu-pixels"]
+vello-cpu-pixels = ["vello-cpu-base", "anyrender_vello_cpu/pixels_window_renderer"]
+vello-cpu-softbuffer = ["vello-cpu-base", "anyrender_vello_cpu/softbuffer_window_renderer"]
+vello-cpu-base = ["native"]
 
 [dependencies]
 inventory = { workspace = true, optional = true }
@@ -26,6 +38,11 @@ blitz-paint = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baae
 blitz-traits = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", optional = true }
 anyrender = { version = "0.14", optional = true }
 anyrender_vello_cpu = { version = "0.18", features = ["softbuffer_window_renderer"], optional = true }
+anyrender_vello = { version = "0.15", optional = true }
+anyrender_vello_hybrid = { version = "0.11", optional = true }
+anyrender_skia = { version = "0.12", optional = true }
+wgpu_context = { version = "0.10", optional = true }
+cfg-if = { version = "1", optional = true }
 peniko = { version = "0.6", optional = true }
 png = { version = "0.18", optional = true }
 
