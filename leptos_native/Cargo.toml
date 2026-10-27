@@ -37,7 +37,7 @@ blitz-shell = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baae
 blitz-paint = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, optional = true }
 blitz-traits = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", optional = true }
 anyrender = { version = "0.14", optional = true }
-anyrender_vello_cpu = { version = "0.18", features = ["softbuffer_window_renderer"], optional = true }
+anyrender_vello_cpu = { version = "0.18", features = ["multithreading", "softbuffer_window_renderer"], optional = true }
 anyrender_vello = { version = "0.15", optional = true }
 anyrender_vello_hybrid = { version = "0.11", optional = true }
 anyrender_skia = { version = "0.12", optional = true }
