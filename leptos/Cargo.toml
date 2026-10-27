@@ -11,6 +11,7 @@ rust-version.workspace = true
 edition.workspace = true
 
 [dependencies]
+inventory = { version = "0.3.25", optional = true }
 throw_error = { workspace = true }
 any_spawner = { workspace = true, features = [
   "wasm-bindgen",
@@ -64,7 +65,7 @@ dioxus-cli-config = { workspace = true, default-features = true, optional = true
 dioxus-devtools = { workspace = true, default-features = true, optional = true }
 
 [features]
-native = ["tachys/native", "reactive_graph/effects"]
+native = ["tachys/native", "reactive_graph/effects", "dep:inventory"]
 hydration = [
   "reactive_graph/hydration",
   "leptos_server/hydration",

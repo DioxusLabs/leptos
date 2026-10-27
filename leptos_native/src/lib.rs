@@ -343,8 +343,27 @@ impl EventHandler for LeptosEventHandler {
     }
 }
 
+#[cfg(feature = "auto-launch")]
+inventory::submit! {
+    leptos::mount::NativeLauncher { launch: launch_registered }
+}
+
+#[cfg(feature = "auto-launch")]
+fn launch_registered(app: leptos::mount::NativeApp) {
+    launch(app);
+}
+
 /// Opens a native Blitz window using its CPU softbuffer renderer.
+///
+/// Set `LEPTOS_NATIVE_HEADLESS` to a PNG path to render one frame and exit
+/// without creating a window or requiring a display server.
 pub fn launch<V: IntoView + 'static>(app: impl FnOnce() -> V) {
+    if let Some(path) = std::env::var_os("LEPTOS_NATIVE_HEADLESS") {
+        let mut document = LeptosDocument::new(app);
+        document.render_png(&path);
+        println!("Native headless frame: {}", Path::new(&path).display());
+        return;
+    }
     let event_loop = blitz_shell::create_default_event_loop();
     let (proxy, receiver) =
         blitz_shell::BlitzShellProxy::new(event_loop.create_proxy());

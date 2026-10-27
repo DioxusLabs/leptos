@@ -1,4 +1,6 @@
 use leptos::prelude::*;
+#[cfg(feature = "native")]
+use leptos_native as _;
 
 /// A simple counter component.
 ///

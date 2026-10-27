@@ -2428,6 +2428,7 @@ dependencies = [
  "futures",
  "getrandom 0.4.3",
  "hydration_context",
+ "inventory",
  "leptos-spin-macro",
  "leptos_config",
  "leptos_dom",

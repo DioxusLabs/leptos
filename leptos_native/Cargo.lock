@@ -1551,6 +1551,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71dd52191aae121e8611f1e8dc3e324dd0dd1dee1e6dd91d10ee07a3cfb4d9d8"
 
 [[package]]
+name = "inventory"
+version = "0.3.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6928282826c822ad91bf1c9a1cb90a30ba1c26770749929b4656cd6be829cd7c"
+dependencies = [
+ "rustversion",
+]
+
+[[package]]
 name = "itertools"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1710,6 +1719,7 @@ dependencies = [
  "futures",
  "getrandom 0.4.3",
  "hydration_context",
+ "inventory",
  "leptos_config",
  "leptos_dom",
  "leptos_hot_reload",
@@ -1809,6 +1819,7 @@ dependencies = [
  "blitz-traits",
  "counter",
  "counters",
+ "inventory",
  "js-framework-benchmark-leptos",
  "leptos",
  "peniko",

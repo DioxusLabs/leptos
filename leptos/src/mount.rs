@@ -7,10 +7,11 @@ use reactive_graph::owner::Owner;
 use std::cell::Cell;
 #[cfg(feature = "native")]
 use tachys::renderer::types::Element as HtmlElement;
-use tachys::{
-    dom::body,
-    view::{Mountable, Render},
-};
+#[cfg(feature = "native")]
+use tachys::view::any_view::{AnyView, IntoAny};
+#[cfg(any(not(feature = "native"), feature = "hydrate"))]
+use tachys::dom::body;
+use tachys::view::{Mountable, Render};
 #[cfg(feature = "hydrate")]
 use tachys::{
     hydration::Cursor,
@@ -165,6 +166,7 @@ where
 }
 
 /// Runs the provided closure and mounts the result to the `<body>`.
+#[cfg(not(feature = "native"))]
 pub fn mount_to_body<F, N>(f: F)
 where
     F: FnOnce() -> N + 'static,
@@ -172,6 +174,76 @@ where
 {
     let owner = mount_to(body(), f);
     owner.forget();
+}
+
+#[cfg(feature = "native")]
+/// An application factory evaluated inside the native host's document scope.
+pub type NativeApp = Box<dyn FnOnce() -> AnyView>;
+
+#[cfg(feature = "native")]
+/// A native host submitted through `inventory` by a linked launcher crate.
+pub struct NativeLauncher {
+    /// Opens the host and evaluates the application in its renderer scope.
+    pub launch: fn(NativeApp),
+}
+
+#[cfg(feature = "native")]
+inventory::collect!(NativeLauncher);
+
+#[cfg(feature = "native")]
+fn native_launcher<'a>(
+    mut launchers: impl Iterator<Item = &'a NativeLauncher>,
+) -> fn(NativeApp) {
+    let launcher = launchers.next().expect(
+        "mount_to_body with leptos/native requires a linked native host; \
+         enable leptos_native/auto-launch and link leptos_native",
+    );
+    assert!(
+        launchers.next().is_none(),
+        "multiple native launchers registered"
+    );
+    launcher.launch
+}
+
+#[cfg(feature = "native")]
+/// Launches the linked native host instead of mounting into a browser body.
+///
+/// Link `leptos_native` with its `auto-launch` feature to provide the host.
+/// Exactly one host must register a [`NativeLauncher`].
+pub fn mount_to_body<F, N>(f: F)
+where
+    F: FnOnce() -> N + 'static,
+    N: IntoView + 'static,
+{
+    native_launcher(inventory::iter::<NativeLauncher>.into_iter())(Box::new(
+        move || f().into_any(),
+    ));
+}
+
+#[cfg(all(test, feature = "native"))]
+mod native_launcher_tests {
+    use super::*;
+
+    #[test]
+    fn selects_one_launcher_without_evaluating_the_app() {
+        let launcher = NativeLauncher { launch: |_| {} };
+        native_launcher(std::iter::once(&launcher))(Box::new(|| {
+            panic!("host decides when the app is evaluated")
+        }));
+    }
+
+    #[test]
+    #[should_panic(expected = "requires a linked native host")]
+    fn missing_launcher_has_actionable_error() {
+        native_launcher(std::iter::empty());
+    }
+
+    #[test]
+    #[should_panic(expected = "multiple native launchers")]
+    fn rejects_multiple_launchers() {
+        let launcher = NativeLauncher { launch: |_| {} };
+        native_launcher([&launcher, &launcher].into_iter());
+    }
 }
 
 /// Runs the provided closure and mounts the result to the provided element.

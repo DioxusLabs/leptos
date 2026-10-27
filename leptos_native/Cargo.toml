@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2024"
 publish = false
 
+[features]
+auto-launch = ["dep:inventory"]
+
 [dependencies]
+inventory = { version = "0.3.25", optional = true }
 leptos = { path = "../leptos", features = ["native"] }
 any_spawner = { path = "../any_spawner" }
 blitz-dom = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, features = ["system-fonts"] }
