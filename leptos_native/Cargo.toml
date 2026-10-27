@@ -31,7 +31,7 @@ vello-cpu-base = ["native"]
 inventory = { workspace = true, optional = true }
 leptos = { workspace = true, features = ["native"], optional = true }
 any_spawner = { workspace = true, optional = true }
-blitz-dom = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, features = ["system-fonts"], optional = true }
+blitz-dom = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, features = ["system-fonts", "floats"], optional = true }
 blitz-html = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, optional = true }
 blitz-shell = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, features = ["data-uri"], optional = true }
 blitz-paint = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, optional = true }

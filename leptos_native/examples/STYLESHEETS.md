@@ -14,8 +14,12 @@ TodoMVC includes the existing **tracked** files directly, in web order:
 
 TodoMVC loads `todomvc.css` afterward as a native-only override: filter items
 and links use `inline-block` to work around Blitz's missing inline
-padding/border/margin painting. The official stylesheets and web app are
-unchanged. Tests require no network.
+padding/border/margin painting, with negative vertical link margins so the
+boxes don't grow the line box (matching inline layout). The official
+stylesheets and web app are unchanged. Tests require no network.
+
+The host enables Blitz's opt-in `floats` feature (`blitz-dom/floats`); without
+it `float` is ignored and floated boxes are laid out as ordinary blocks.
 
 ## Reproduce the comparison
 
@@ -135,13 +139,8 @@ and Completed-filter snapshots. External HTTP/file resources remain unsupported.
   `todomvc.css` makes the filter items and links `inline-block`, giving them
   boxes so Blitz can paint the spacing and selected border. This works around
   unsupported inline box decoration rather than changing the official CSS.
-  The links still sit below the footer line, unlike Chrome; absolute static
-  positioning beside floats remains different.
-- **Clear completed overlaps the filters.** In the Completed-filter native
-  snapshot it is painted over the centered links, instead of at the right.
-  Its relevant declarations are `float: right; position: relative`, while
-  `.todo-count` floats left and `.filters` is absolutely positioned.
-  The inline-block filter override does not fix this overlap; it is left alone.
+  With floats enabled, the count, filters and Clear completed share the
+  footer line as in Chrome.
 - **Toggle-all chevron stays light gray.** Both render the generated rotated
   `label:before` glyph, but native does not show the darker color from
   `.toggle-all:checked + label:before`. Investigate checked-state style

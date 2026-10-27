@@ -2,3 +2,8 @@
 .filters li a {
     display: inline-block;
 }
+
+.filters li a {
+    margin-top: -4px;
+    margin-bottom: -4px;
+}
