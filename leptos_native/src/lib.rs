@@ -6,7 +6,7 @@ use blitz_dom::{
     EventHandler,
 };
 use blitz_traits::{
-    events::{DomEvent, EventState, UiEvent},
+    events::{BlitzInputEvent, DomEvent, DomEventData, EventState, UiEvent},
     node_id::NodeId,
     shell::{ColorScheme, Viewport},
 };
@@ -146,6 +146,18 @@ impl LeptosDocument {
         let mut driver = EventDriver::new(self, LeptosEventHandler);
         driver.handle_dom_event(DomEvent::new(target, data));
     }
+    /// Sets an input's live value and dispatches its native input event.
+    pub fn input(&mut self, target: NodeId, value: &str) {
+        scoped(&mut self.dom, &self.tasks, || Node(target).set_value(value));
+        EventDriver::new(self, LeptosEventHandler).handle_dom_event(
+            DomEvent::new(
+                target,
+                DomEventData::Input(BlitzInputEvent {
+                    value: value.to_owned(),
+                }),
+            ),
+        );
+    }
     pub fn find_by_text(&self, tag: &str, text: &str) -> Option<NodeId> {
         find_node(&self.dom, self.root, &|node| {
             node.data
@@ -161,6 +173,8 @@ impl LeptosDocument {
     pub fn render_png(&mut self, path: impl AsRef<Path>) {
         use anyrender::PaintScene;
         self.dom.resolve(0.0);
+        let (width, height) = self.dom.viewport().window_size;
+        let scale = self.dom.viewport().scale_f64();
         let buffer = anyrender::render_to_buffer::<
             anyrender_vello_cpu::VelloCpuImageRenderer,
             _,
@@ -171,23 +185,31 @@ impl LeptosDocument {
                     Default::default(),
                     blitz_dom::util::Color::WHITE,
                     Default::default(),
-                    &peniko::kurbo::Rect::new(0.0, 0.0, 640.0, 160.0),
+                    &peniko::kurbo::Rect::new(
+                        0.0,
+                        0.0,
+                        width as f64,
+                        height as f64,
+                    ),
                 );
                 blitz_paint::paint_scene(
                     scene,
                     &mut self.dom,
-                    1.0,
-                    640,
-                    160,
+                    scale,
+                    width,
+                    height,
                     0,
                     0,
                 );
             },
-            640,
-            160,
+            width,
+            height,
         );
-        let mut encoder =
-            png::Encoder::new(std::fs::File::create(path).unwrap(), 640, 160);
+        let mut encoder = png::Encoder::new(
+            std::fs::File::create(path).unwrap(),
+            width,
+            height,
+        );
         encoder.set_color(png::ColorType::Rgba);
         encoder.set_depth(png::BitDepth::Eight);
         encoder

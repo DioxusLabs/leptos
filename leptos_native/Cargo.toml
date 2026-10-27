@@ -19,6 +19,7 @@ png = "0.18"
 
 [dev-dependencies]
 counter = { path = "../examples/counter" }
+counters = { path = "../examples/counters" }
 
 [workspace]
 

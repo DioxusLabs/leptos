@@ -180,6 +180,21 @@ impl Node {
                 .map(str::to_owned)
         })
     }
+    pub fn value(&self) -> String {
+        document(|d| {
+            let node =
+                d.get_node(self.0).expect("native value target is missing");
+            node.element_data()
+                .and_then(|element| element.text_input_data())
+                .map(|input| input.editor.raw_text().to_string())
+                .unwrap_or_else(|| {
+                    node.attr("value".into()).unwrap_or_default().to_owned()
+                })
+        })
+    }
+    pub fn set_value(&self, value: &str) {
+        NativeDom::set_property(self, "value", &PropertyValue::from_str(value));
+    }
     pub fn tag_name(&self) -> String {
         document(|d| {
             d.mutate()

@@ -93,11 +93,7 @@ pub fn event_target<
 #[cfg(feature = "native")]
 /// Reads the target's value attribute.
 pub fn event_target_value(event: &crate::renderer::native::Event) -> String {
-    event
-        .target()
-        .unwrap()
-        .get_attribute("value")
-        .unwrap_or_default()
+    event.target().unwrap().value()
 }
 #[cfg(feature = "native")]
 /// Reads the target's checked attribute.

@@ -171,6 +171,10 @@ pub mod prelude {
         };
         pub use leptos_config::*;
         pub use leptos_dom::helpers::*;
+        #[cfg(feature = "native")]
+        pub use tachys::dom::{
+            event_target, event_target_checked, event_target_value,
+        };
         pub use leptos_macro::*;
         pub use leptos_server::*;
         pub use oco_ref::*;
