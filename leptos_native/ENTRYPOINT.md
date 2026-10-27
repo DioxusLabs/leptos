@@ -31,11 +31,21 @@ document/owner/executor scope, not during registration. No event loop is
 created before `main`. Missing and duplicate hosts produce explicit errors.
 
 This keeps dependency direction `app -> leptos_native -> leptos`:
-Leptos has no dependency on its host, Blitz shell, or winit. Only the standalone
-host/example lockfiles resolve windowing dependencies. The native host is
+Leptos has no dependency on its host, Blitz shell, or winit. The host is a normal
+workspace member, so the root lockfile includes its windowing dependencies;
+browser-only builds do not compile them. The native host is
 opt-in and does not register itself when used only as a document/test helper.
 
 ## Browser-only initialization exception
+
+The host API and its dependencies require `leptos_native/native` (disabled by
+default so workspace-wide browser checks do not unify `leptos/native`).
+`auto-launch` includes `native` and registers the shared entrypoint launcher.
+Run all native tests with:
+
+```sh
+cargo test -p leptos_native --release --features auto-launch -- --nocapture
+```
 
 The counter's `main.rs` is not byte-for-byte unchanged: its two browser logging
 initializers are wrapped in `#[cfg(target_arch = "wasm32")]`. The application

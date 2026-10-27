@@ -1,4 +1,5 @@
 //! Experimental Leptos host for Blitz's native DOM and CPU renderer.
+#![cfg(feature = "native")]
 
 use any_spawner::{CustomExecutor, Executor, PinnedFuture, PinnedLocalFuture};
 use blitz_dom::{

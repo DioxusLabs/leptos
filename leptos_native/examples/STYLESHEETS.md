@@ -19,7 +19,7 @@ Neither app has native-specific CSS overrides. Tests require no network.
 From the repository root:
 
 ```sh
-cargo test --release --manifest-path leptos_native/Cargo.toml \
+cargo test --release --manifest-path leptos_native/Cargo.toml --features native \
   --test todomvc --test js_framework_benchmark -- --nocapture
 python leptos_native/examples/render_web_references.py
 ```

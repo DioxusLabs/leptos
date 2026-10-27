@@ -16,6 +16,7 @@ members = [
   "leptos_config",
   "leptos_hot_reload",
   "leptos_macro",
+  "leptos_native",
   "leptos_server",
   "reactive_graph",
   "reactive_stores",
@@ -36,7 +37,7 @@ members = [
   "router_macro",
   "any_error",
 ]
-exclude = ["benchmarks", "examples", "projects", "leptos_native"]
+exclude = ["benchmarks", "examples", "projects"]
 
 [workspace.package]
 edition = "2024"

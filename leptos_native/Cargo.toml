@@ -1,25 +1,32 @@
 [package]
 name = "leptos_native"
 version = "0.1.0"
-edition = "2024"
+authors = ["Greg Johnston"]
+license = "MIT"
+repository = "https://github.com/leptos-rs/leptos"
+homepage = "https://leptos.dev/"
+description = "Native Blitz host for Leptos applications."
+edition.workspace = true
+rust-version = "1.91.0"
 publish = false
 
 [features]
-auto-launch = ["dep:inventory"]
+native = ["dep:leptos", "dep:any_spawner", "dep:blitz-dom", "dep:blitz-html", "dep:blitz-shell", "dep:blitz-paint", "dep:blitz-traits", "dep:anyrender", "dep:anyrender_vello_cpu", "dep:peniko", "dep:png"]
+auto-launch = ["native", "dep:inventory"]
 
 [dependencies]
-inventory = { version = "0.3.25", optional = true }
-leptos = { path = "../leptos", features = ["native"] }
-any_spawner = { path = "../any_spawner" }
-blitz-dom = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, features = ["system-fonts"] }
-blitz-html = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false }
-blitz-shell = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false }
-blitz-paint = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false }
-blitz-traits = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30" }
-anyrender = "0.14"
-anyrender_vello_cpu = { version = "0.18", features = ["softbuffer_window_renderer"] }
-peniko = "0.6"
-png = "0.18"
+inventory = { workspace = true, optional = true }
+leptos = { workspace = true, features = ["native"], optional = true }
+any_spawner = { workspace = true, optional = true }
+blitz-dom = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, features = ["system-fonts"], optional = true }
+blitz-html = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, optional = true }
+blitz-shell = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, optional = true }
+blitz-paint = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, optional = true }
+blitz-traits = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", optional = true }
+anyrender = { version = "0.14", optional = true }
+anyrender_vello_cpu = { version = "0.18", features = ["softbuffer_window_renderer"], optional = true }
+peniko = { version = "0.6", optional = true }
+png = { version = "0.18", optional = true }
 
 [dev-dependencies]
 counter = { path = "../examples/counter" }
@@ -27,7 +34,46 @@ counters = { path = "../examples/counters" }
 js-framework-benchmark-leptos = { path = "../examples/js-framework-benchmark" }
 todomvc = { path = "../examples/todomvc", features = ["native"] }
 
-[workspace]
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--generate-link-to-definition"]
 
-[profile.dev]
-debug = 0
+[[example]]
+name = "counter"
+required-features = ["native"]
+
+[[example]]
+name = "counters"
+required-features = ["native"]
+
+[[example]]
+name = "js_framework_benchmark"
+required-features = ["native"]
+
+[[example]]
+name = "todomvc"
+required-features = ["native"]
+
+[[test]]
+name = "counter"
+required-features = ["native"]
+
+[[test]]
+name = "counters"
+required-features = ["native"]
+
+[[test]]
+name = "js_framework_benchmark"
+required-features = ["native"]
+
+[[test]]
+name = "todomvc"
+required-features = ["native"]
+
+[[test]]
+name = "runtime"
+required-features = ["native"]
+
+[[test]]
+name = "entrypoint"
+required-features = ["auto-launch"]
