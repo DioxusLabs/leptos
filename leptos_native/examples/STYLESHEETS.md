@@ -50,6 +50,44 @@ Artifacts live in `leptos_native/output/`:
 | TodoMVC Completed filter | `todomvc-completed.png` | `todomvc-completed-web.png` |
 | TodoMVC after clear | `todomvc-after.png` | `todomvc-after-web.png` |
 
+## Native event/redraw behavior
+
+The host drains Leptos tasks after the complete Blitz UI event/default-action
+queue, before returning to the window's input handler. It retains event dirtiness
+even when callbacks mutate the DOM synchronously without waking a future.
+Polling consumed work explicitly requests redraw through the document's shell
+provider. A pending future still wakes Blitz through the stored task-context
+waker, and its next poll also requests redraw.
+
+`tests/runtime.rs` checks pointer down/up → counter update → redraw request,
+without an extra input or caller poll, plus synchronous attribute changes.
+A separate test releases a pending future without input, asserts the registered
+shell waker fires, and checks that polling updates the DOM and requests redraw.
+These use a recording shell provider, not a real window. The original window
+timing is not reproduced headlessly; this verifies the host-side ordering and
+redraw contract, not the OS presentation of the frame.
+
+### Upstream Blitz input gaps (pinned fe33b77)
+
+- **Focused buttons have no Enter/Space activation.**
+  `focused_clear_completed_has_no_blitz_keyboard_activation` Tab-focuses the
+  actual TodoMVC button, sends both keys through `Document::handle_ui_event`, and
+  verifies the completed todo remains. A direct click clears it. Blitz's
+  `events/driver.rs` forwards focused key events to default handling;
+  `events/keyboard.rs` implements Tab and text editing but no button activation,
+  and the KeyUp default action in `events/mod.rs` is empty.
+- **Double-click delivery works for two clicks, but repeated pairs can fail.**
+  `pointer_double_clicks_edit_each_todo_without_another_input` sends two pointer
+  down/up sequences within 500ms at each of three labels; all enter editing and
+  focus the input without another event. The rapid-repeat test then demonstrates
+  that two more clicks at the same label within 500ms do not reopen editing.
+  Blitz's `events/pointer.rs::handle_pointerdown` increments the count without
+  resetting after a pair when each down is within 500ms and 2px of the previous
+  one. Its double-click dispatch checks exactly `click_count == 2`, so counts
+  3 and 4 emit no double-click. This reproduces one failure mode, but the user's
+  exact click timing/movement was not recorded, so it does not establish the
+  cause of every reported missed edit.
+
 ## Visible differences (Chrome 137, Blitz CPU renderer)
 
 These identify the CSS features exercised by the differences, not isolated

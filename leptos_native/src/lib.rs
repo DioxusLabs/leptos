@@ -89,6 +89,7 @@ pub struct LeptosDocument {
     owner: Owner,
     state: Option<Box<dyn Mountable>>,
     tasks: Rc<Tasks>,
+    event_dirty: bool,
 }
 impl LeptosDocument {
     pub fn new<V: IntoView + 'static>(app: impl FnOnce() -> V) -> Self {
@@ -134,6 +135,7 @@ impl LeptosDocument {
             owner,
             state: Some(state),
             tasks,
+            event_dirty: false,
         };
         document.poll(None);
         document
@@ -252,6 +254,7 @@ impl Document for LeptosDocument {
     }
     fn handle_ui_event(&mut self, event: UiEvent) {
         EventDriver::new(self, LeptosEventHandler).handle_ui_event(event);
+        self.poll(None);
     }
     fn poll(&mut self, context: Option<Context<'_>>) -> bool {
         if let Some(context) = context {
@@ -260,7 +263,7 @@ impl Document for LeptosDocument {
         }
         let waker = Waker::from(self.tasks.wake.clone());
         let mut context = Context::from_waker(&waker);
-        let mut changed = false;
+        let mut changed = std::mem::take(&mut self.event_dirty);
         scoped(&mut self.dom, &self.tasks, || {
             while self.tasks.wake.ready.swap(false, Ordering::AcqRel) {
                 changed = true;
@@ -275,6 +278,9 @@ impl Document for LeptosDocument {
                 self.tasks.futures.borrow_mut().extend(pending);
             }
         });
+        if changed {
+            self.dom.shell_provider.request_redraw();
+        }
         changed
     }
 }
@@ -345,6 +351,7 @@ impl EventHandler for LeptosEventHandler {
         if event.propagation_stopped() {
             state.stop_propagation();
         }
+        doc.event_dirty = true;
     }
 }
 

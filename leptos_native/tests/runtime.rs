@@ -1,4 +1,5 @@
 use blitz_dom::Document;
+use blitz_traits::node_id::NodeId;
 use leptos::{
     ev, html,
     prelude::*,
@@ -8,7 +9,133 @@ use leptos::{
     },
 };
 use leptos_native::LeptosDocument;
-use std::{cell::Cell, rc::Rc};
+use std::{
+    cell::{Cell, RefCell},
+    rc::Rc,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+    task::{Context, Poll, Wake, Waker},
+};
+
+#[derive(Default)]
+struct ShellProbe {
+    redraws: AtomicUsize,
+    wakes: AtomicUsize,
+}
+
+impl blitz_traits::shell::ShellProvider for ShellProbe {
+    fn request_redraw(&self) {
+        self.redraws.fetch_add(1, Ordering::Relaxed);
+    }
+}
+
+impl Wake for ShellProbe {
+    fn wake(self: Arc<Self>) {
+        self.wakes.fetch_add(1, Ordering::Relaxed);
+    }
+}
+
+fn pointer_click(doc: &mut LeptosDocument, target: NodeId, shell: &ShellProbe) {
+    use blitz_traits::events::{MouseEventButton, UiEvent};
+    doc.dom.resolve(0.0);
+    let mut event = doc
+        .dom
+        .get_node(target)
+        .unwrap()
+        .synthetic_click_event_data(Default::default());
+    event.buttons = MouseEventButton::Main.into();
+    doc.handle_ui_event(UiEvent::PointerDown(event.clone()));
+    let redraws = shell.redraws.load(Ordering::Relaxed);
+    event.buttons = Default::default();
+    doc.handle_ui_event(UiEvent::PointerUp(event));
+    assert!(shell.redraws.load(Ordering::Relaxed) > redraws);
+}
+
+#[test]
+fn ui_events_flush_effects_and_request_redraw_without_another_input() {
+    let mut doc = LeptosDocument::new(|| {
+        view! {
+            <counter::SimpleCounter initial_value=0 step=1 />
+            <button id="sync" on:click=move |event| {
+                Rndr::set_attribute(&event.target().unwrap(), "data-selected", "yes");
+            }>"sync"</button>
+        }
+    });
+    let shell = Arc::new(ShellProbe::default());
+    doc.dom.set_shell_provider(shell.clone());
+    let increment = doc.find_by_text("button", "+1").unwrap();
+    pointer_click(&mut doc, increment, &shell);
+    assert!(doc.text().contains("Value: 1!"));
+    assert!(shell.redraws.load(Ordering::Relaxed) > 0);
+    assert!(!doc.poll(None));
+
+    let before = shell.redraws.load(Ordering::Relaxed);
+    let button = doc.dom.query_selector("#sync").unwrap().unwrap();
+    pointer_click(&mut doc, button, &shell);
+    assert_eq!(
+        doc.dom.get_node(button).unwrap().attr("data-selected".into()),
+        Some("yes")
+    );
+    assert!(shell.redraws.load(Ordering::Relaxed) > before);
+    assert!(!doc.poll(None));
+    println!(
+        "pointer-up flushes reactive and synchronous DOM changes and requests \
+         redraw; idle poll is false"
+    );
+}
+
+#[test]
+fn pending_tasks_wake_the_shell_and_request_redraw_without_input() {
+    let released = Rc::new(Cell::new(false));
+    let pending = Rc::new(RefCell::new(None::<Waker>));
+    let mut doc = LeptosDocument::new({
+        let released = released.clone();
+        let pending = pending.clone();
+        move || {
+            let (value, set_value) = signal(0);
+            view! {
+                <button on:click=move |_| {
+                    let released = released.clone();
+                    let pending = pending.clone();
+                    any_spawner::Executor::spawn_local(async move {
+                        std::future::poll_fn(move |cx| {
+                            if released.get() {
+                                Poll::Ready(())
+                            } else {
+                                *pending.borrow_mut() = Some(cx.waker().clone());
+                                Poll::Pending
+                            }
+                        }).await;
+                        set_value.set(1);
+                    });
+                }>"start"</button>
+                <span>{value}</span>
+            }
+        }
+    });
+    let shell = Arc::new(ShellProbe::default());
+    doc.dom.set_shell_provider(shell.clone());
+    let waker = Waker::from(shell.clone());
+    doc.poll(Some(Context::from_waker(&waker)));
+    doc.click(doc.find_by_text("button", "start").unwrap());
+    assert!(doc.poll(Some(Context::from_waker(&waker))));
+    assert!(doc.text().ends_with('0'));
+    let wakes = shell.wakes.load(Ordering::Relaxed);
+    let redraws = shell.redraws.load(Ordering::Relaxed);
+    released.set(true);
+    pending.borrow_mut().take().unwrap().wake();
+    assert!(shell.wakes.load(Ordering::Relaxed) > wakes);
+    assert!(doc.poll(Some(Context::from_waker(&waker))));
+    assert!(doc.text().ends_with('1'));
+    assert!(shell.redraws.load(Ordering::Relaxed) > redraws);
+    assert!(!doc.poll(None));
+    println!(
+        "pending future wakes the registered shell waker; poll updates DOM \
+         and requests redraw without input"
+    );
+}
 
 #[test]
 fn empty_document_and_scoped_access() {
