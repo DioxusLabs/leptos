@@ -4,6 +4,8 @@ use leptos::prelude::*;
 use leptos_native::LeptosDocument;
 use std::time::{Duration, Instant};
 
+mod common;
+
 #[derive(Debug, Clone, PartialEq)]
 struct Row {
     node: NodeId,
@@ -72,7 +74,8 @@ fn assert_new_rows(rows: &[Row], count: usize) {
 fn standard_operations_and_frame_timings() {
     let mut doc = LeptosDocument::new(|| {
         view! {
-            <style>{include_str!("../examples/js_framework_benchmark.css")}</style>
+            <style>{include_str!("../examples/bootstrap.min.css")}</style>
+            <style>".danger { background: gold }"</style>
             <js_framework_benchmark_leptos::App />
         }
     });
@@ -87,7 +90,7 @@ fn standard_operations_and_frame_timings() {
     let output =
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("output");
     std::fs::create_dir_all(&output).unwrap();
-    doc.render_png(output.join("benchmark-before.png"));
+    common::snapshot(&mut doc, &output, "benchmark-before");
     let mut timings = Vec::new();
 
     timings.push(("Create 1,000", button(&mut doc, "run"), 1000));
@@ -126,7 +129,7 @@ fn standard_operations_and_frame_timings() {
     let mut expected = updated;
     expected[1].selected = true;
     assert_eq!(selected, expected);
-    doc.render_png(output.join("benchmark-selected.png"));
+    common::snapshot(&mut doc, &output, "benchmark-selected");
 
     timings.push(("Swap rows (2 / 999)", button(&mut doc, "swaprows"), 1000));
     expected.swap(1, 998);
@@ -148,7 +151,7 @@ fn standard_operations_and_frame_timings() {
     assert_eq!(&appended[..10000], &lots);
     assert_new_rows(&appended[10000..], 1000);
     assert!(appended[10000].id > lots.last().unwrap().id);
-    doc.render_png(output.join("benchmark-after.png"));
+    common::snapshot(&mut doc, &output, "benchmark-after");
 
     timings.push(("Clear", button(&mut doc, "clear"), 0));
     assert!(rows(&doc).is_empty());
@@ -167,8 +170,8 @@ fn standard_operations_and_frame_timings() {
          excludes paint, selectors and assertions."
     );
     println!(
-        "Native ViewTemplate builds nodes directly; local native stylesheet, \
-         no Bootstrap CDN."
+        "Native ViewTemplate builds nodes directly; vendored Bootstrap 5.2.3, \
+         no network."
     );
     println!("{:<24} | {:>7} | {:>12}", "Operation", "Rows", "Leptos ms");
     for (name, elapsed, count) in timings {

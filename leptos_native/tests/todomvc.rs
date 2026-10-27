@@ -10,6 +10,8 @@ use leptos::{
 };
 use leptos_native::LeptosDocument;
 
+mod common;
+
 fn query(doc: &LeptosDocument, selector: &str) -> NodeId {
     doc.dom.query_selector(selector).unwrap().expect(selector)
 }
@@ -17,7 +19,8 @@ fn query(doc: &LeptosDocument, selector: &str) -> NodeId {
 fn app() -> LeptosDocument {
     let mut doc = LeptosDocument::new(|| {
         view! {
-            <style>{include_str!("../examples/todomvc.css")}</style>
+            <style>{include_str!("../../examples/todomvc/node_modules/todomvc-common/base.css")}</style>
+            <style>{include_str!("../../examples/todomvc/node_modules/todomvc-app-css/index.css")}</style>
             <todomvc::TodoMVC />
         }
     });
@@ -119,7 +122,7 @@ fn todos_add_toggle_filter_edit_and_clear() {
     let output =
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("output");
     std::fs::create_dir_all(&output).unwrap();
-    doc.render_png(output.join("todomvc-before.png"));
+    common::snapshot(&mut doc, &output, "todomvc-before");
 
     click(&mut doc, ".todo:first-child .toggle");
     count(&doc, "2 items left");
@@ -137,6 +140,7 @@ fn todos_add_toggle_filter_edit_and_clear() {
     assert_eq!(titles(&doc), ["Buy milk"]);
     assert_eq!(doc.dom.url().fragment(), Some("/completed"));
     count(&doc, "2 items left");
+    common::snapshot(&mut doc, &output, "todomvc-completed");
     click(&mut doc, "a[href='#/']");
 
     let input = edit(&mut doc, ".todo:nth-child(2) label");
@@ -153,7 +157,7 @@ fn todos_add_toggle_filter_edit_and_clear() {
     click(&mut doc, ".clear-completed");
     assert_eq!(titles(&doc), ["Write more native tests", "Ship spike"]);
     count(&doc, "2 items left");
-    doc.render_png(output.join("todomvc-after.png"));
+    common::snapshot(&mut doc, &output, "todomvc-after");
     println!("{}", output.join("todomvc-before.png").display());
     println!("{}", output.join("todomvc-after.png").display());
 }
