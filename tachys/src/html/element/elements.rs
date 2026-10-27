@@ -96,7 +96,10 @@ macro_rules! html_element_inner {
             }
 
             impl ElementType for $struct_name {
+                #[cfg(not(feature = "native"))]
                 type Output = web_sys::$ty;
+                #[cfg(feature = "native")]
+                type Output = crate::renderer::types::Element;
 
                 const TAG: &'static str = stringify!($tag);
                 const SELF_CLOSING: bool = false;
@@ -204,7 +207,10 @@ macro_rules! html_self_closing_elements {
                 }
 
                 impl ElementType for [<$tag:camel>] {
+                    #[cfg(not(feature = "native"))]
                     type Output = web_sys::$ty;
+                    #[cfg(feature = "native")]
+                    type Output = crate::renderer::types::Element;
 
                     const TAG: &'static str = stringify!($tag);
                     const SELF_CLOSING: bool = true;

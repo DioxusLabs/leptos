@@ -1,7 +1,12 @@
-use crate::{IntoView, children::TypedChildrenFn, mount};
+#[cfg(not(feature = "native"))]
+use crate::mount;
+use crate::{IntoView, children::TypedChildrenFn};
+#[cfg(not(feature = "native"))]
 use leptos_dom::helpers::document;
 use leptos_macro::component;
+#[cfg(not(feature = "native"))]
 use reactive_graph::{effect::Effect, graph::untrack, owner::Owner};
+#[cfg(not(feature = "native"))]
 use std::sync::Arc;
 
 /// Renders components somewhere else in the DOM.
@@ -28,6 +33,14 @@ pub fn Portal<V>(
 where
     V: IntoView + 'static,
 {
+    #[cfg(feature = "native")]
+    {
+        let _ = (mount, use_shadow, is_svg, children);
+        unimplemented!("native portals are not supported by this spike");
+        #[allow(unreachable_code)]
+        ()
+    }
+    #[cfg(not(feature = "native"))]
     if cfg!(target_arch = "wasm32")
         && Owner::current_shared_context()
             .map(|sc| sc.is_browser())

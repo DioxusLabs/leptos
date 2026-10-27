@@ -1,3 +1,5 @@
+#[cfg(feature = "native")]
+use crate::renderer::native::PropertyValue as JsValue;
 use crate::{
     dom::{event_target_checked, event_target_value},
     html::{
@@ -21,6 +23,7 @@ use reactive_graph::{
     wrappers::read::Signal,
 };
 use send_wrapper::SendWrapper;
+#[cfg(not(feature = "native"))]
 use wasm_bindgen::JsValue;
 #[cfg(feature = "reactive_stores")]
 use {
@@ -461,17 +464,17 @@ where
 /// Returns self from an event target.
 pub trait FromEventTarget {
     /// Returns self from an event target.
-    fn from_event_target(evt: &web_sys::Event) -> Self;
+    fn from_event_target(evt: &crate::html::event::Event) -> Self;
 }
 
 impl FromEventTarget for bool {
-    fn from_event_target(evt: &web_sys::Event) -> Self {
+    fn from_event_target(evt: &crate::html::event::Event) -> Self {
         event_target_checked(evt)
     }
 }
 
 impl FromEventTarget for String {
-    fn from_event_target(evt: &web_sys::Event) -> Self {
+    fn from_event_target(evt: &crate::html::event::Event) -> Self {
         event_target_value(evt)
     }
 }
@@ -492,7 +495,7 @@ pub trait ChangeEvent {
         Self: Sized;
 }
 
-impl ChangeEvent for web_sys::Element {
+impl ChangeEvent for Element {
     fn attach_change_event<T, W>(
         &self,
         key: &str,
@@ -532,13 +535,13 @@ pub trait GetValue<T> {
     fn get_value(&self) -> T;
 }
 
-impl GetValue<String> for web_sys::Element {
+impl GetValue<String> for Element {
     fn get_value(&self) -> String {
         self.get_attribute("value").unwrap_or_default()
     }
 }
 
-impl GetValue<bool> for web_sys::Element {
+impl GetValue<bool> for Element {
     fn get_value(&self) -> bool {
         self.get_attribute("checked").unwrap_or_default() == "true"
     }

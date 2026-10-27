@@ -1,3 +1,5 @@
+#[cfg(feature = "native")]
+use crate::renderer::native::PropertyValue as JsValue;
 use crate::{
     html::{
         attribute::{AttributeValue, any_attribute::AnyAttribute},
@@ -15,6 +17,7 @@ use crate::{
     },
 };
 use oco_ref::Oco;
+#[cfg(not(feature = "native"))]
 use wasm_bindgen::JsValue;
 
 /// Retained view state for [`Oco`].

@@ -64,6 +64,7 @@ dioxus-cli-config = { workspace = true, default-features = true, optional = true
 dioxus-devtools = { workspace = true, default-features = true, optional = true }
 
 [features]
+native = ["tachys/native", "reactive_graph/effects"]
 hydration = [
   "reactive_graph/hydration",
   "leptos_server/hydration",

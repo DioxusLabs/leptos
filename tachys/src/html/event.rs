@@ -15,7 +15,13 @@ use std::{
     ops::{Deref, DerefMut},
     rc::Rc,
 };
+#[cfg(not(feature = "native"))]
 use wasm_bindgen::convert::FromWasmAbi;
+#[cfg(feature = "native")]
+/// Marker bound for native event descriptors (no WASM ABI is needed).
+pub trait FromWasmAbi {}
+#[cfg(feature = "native")]
+impl<T> FromWasmAbi for T {}
 
 /// A cloneable event callback.
 pub type SharedEventCallback<E> = Rc<RefCell<dyn FnMut(E)>>;
@@ -486,7 +492,7 @@ impl<E: EventDescriptor> EventDescriptor for Capture<E> {
 
 /// A custom event.
 #[derive(Debug)]
-pub struct Custom<E: FromWasmAbi = web_sys::Event> {
+pub struct Custom<E: FromWasmAbi = Event> {
     name: Cow<'static, str>,
     options: Option<SendWrapper<web_sys::AddEventListenerOptions>>,
     _event_type: PhantomData<fn() -> E>,
@@ -574,7 +580,7 @@ macro_rules! generate_event_types {
         pub struct [<$( $event )+ >];
 
         impl EventDescriptor for [< $($event)+ >] {
-          type EventType = web_sys::$web_event;
+          type EventType = $web_event;
 
           #[inline(always)]
           fn name(&self) -> Cow<'static, str> {
@@ -812,12 +818,51 @@ use super::{
     element::HasElementType,
 };
 #[doc(no_inline)]
+#[cfg(not(feature = "native"))]
 pub use web_sys::{
     AnimationEvent, BeforeUnloadEvent, ClipboardEvent, CompositionEvent,
     CustomEvent, DeviceMotionEvent, DeviceOrientationEvent, DragEvent,
     ErrorEvent, Event, FocusEvent, GamepadEvent, HashChangeEvent, InputEvent,
     KeyboardEvent, MessageEvent, MouseEvent, PageTransitionEvent, PointerEvent,
     PopStateEvent, ProgressEvent, PromiseRejectionEvent,
-    SecurityPolicyViolationEvent, StorageEvent, SubmitEvent, TouchEvent,
-    TransitionEvent, UiEvent, WheelEvent,
+    SecurityPolicyViolationEvent, StorageEvent, SubmitEvent, ToggleEvent,
+    TouchEvent, TransitionEvent, UiEvent, WheelEvent,
 };
+
+#[cfg(feature = "native")]
+macro_rules! native_events {
+    ($($name:ident),* $(,)?) => { $(#[doc = "Native event data and propagation controls."] pub type $name = crate::renderer::native::Event;)* };
+}
+#[cfg(feature = "native")]
+native_events!(
+    AnimationEvent,
+    BeforeUnloadEvent,
+    ClipboardEvent,
+    CompositionEvent,
+    CustomEvent,
+    DeviceMotionEvent,
+    DeviceOrientationEvent,
+    DragEvent,
+    ErrorEvent,
+    Event,
+    FocusEvent,
+    GamepadEvent,
+    HashChangeEvent,
+    InputEvent,
+    KeyboardEvent,
+    MessageEvent,
+    MouseEvent,
+    PageTransitionEvent,
+    PointerEvent,
+    PopStateEvent,
+    ProgressEvent,
+    PromiseRejectionEvent,
+    SecurityPolicyViolationEvent,
+    StorageEvent,
+    SubmitEvent,
+    TouchEvent,
+    TransitionEvent,
+    UiEvent,
+    WheelEvent,
+    ToggleEvent
+);

@@ -36,7 +36,7 @@ members = [
   "router_macro",
   "any_error",
 ]
-exclude = ["benchmarks", "examples", "projects"]
+exclude = ["benchmarks", "examples", "projects", "leptos_native"]
 
 [workspace.package]
 edition = "2024"

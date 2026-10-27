@@ -25,7 +25,10 @@ impl<E: 'static> ElementType for Custom<E>
 where
     E: AsRef<str> + Send,
 {
+    #[cfg(not(feature = "native"))]
     type Output = web_sys::HtmlElement;
+    #[cfg(feature = "native")]
+    type Output = crate::renderer::types::Element;
 
     const SELF_CLOSING: bool = false;
     const ESCAPE_CHILDREN: bool = true;

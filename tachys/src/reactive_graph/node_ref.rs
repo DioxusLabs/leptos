@@ -1,4 +1,7 @@
-use crate::html::{element::ElementType, node_ref::NodeRefContainer};
+use crate::{
+    html::{element::ElementType, node_ref::NodeRefContainer},
+    renderer::{types::Element, CastFrom},
+};
 use reactive_graph::{
     effect::Effect,
     graph::untrack,
@@ -13,7 +16,6 @@ use reactive_graph::{
 };
 use send_wrapper::SendWrapper;
 use std::{cell::Cell, ops::DerefMut};
-use wasm_bindgen::JsCast;
 
 /// A reactive reference to a DOM node that can be used with the `node_ref` attribute.
 #[derive(Debug)]
@@ -41,7 +43,7 @@ where
         E: 'static,
         F: FnOnce(E::Output) + 'static,
         E: ElementType,
-        E::Output: JsCast + Clone + 'static,
+        E::Output: CastFrom<Element> + Clone + 'static,
     {
         let f = Cell::new(Some(f));
 
@@ -86,20 +88,22 @@ where
 impl<E> NodeRefContainer<E> for NodeRef<E>
 where
     E: ElementType,
-    E::Output: JsCast + 'static,
+    E::Output: CastFrom<Element> + 'static,
 {
     fn load(self, el: &crate::renderer::types::Element) {
         // safe to construct SendWrapper here, because it will only run in the browser
         // so it will always be accessed or dropped from the main thread
-        self.0
-            .set(Some(SendWrapper::new(el.clone().unchecked_into())));
+        self.0.set(Some(SendWrapper::new(
+            E::Output::cast_from(el.clone())
+                .expect("node_ref element type mismatch"),
+        )));
     }
 }
 
 impl<E> DefinedAt for NodeRef<E>
 where
     E: ElementType,
-    E::Output: JsCast + 'static,
+    E::Output: CastFrom<Element> + 'static,
 {
     fn defined_at(&self) -> Option<&'static std::panic::Location<'static>> {
         self.0.defined_at()
@@ -109,7 +113,7 @@ where
 impl<E> Notify for NodeRef<E>
 where
     E: ElementType,
-    E::Output: JsCast + Clone + 'static,
+    E::Output: CastFrom<Element> + Clone + 'static,
 {
     fn notify(&self) {
         self.0.notify();
@@ -119,7 +123,7 @@ where
 impl<E> Write for NodeRef<E>
 where
     E: ElementType,
-    E::Output: JsCast + Clone + 'static,
+    E::Output: CastFrom<Element> + Clone + 'static,
 {
     type Value = Option<SendWrapper<E::Output>>;
 
@@ -137,7 +141,7 @@ where
 impl<E> ReadUntracked for NodeRef<E>
 where
     E: ElementType,
-    E::Output: JsCast + Clone + 'static,
+    E::Output: CastFrom<Element> + Clone + 'static,
 {
     type Value = ReadGuard<Option<E::Output>, Derefable<Option<E::Output>>>;
 
@@ -151,7 +155,7 @@ where
 impl<E> Track for NodeRef<E>
 where
     E: ElementType,
-    E::Output: JsCast + 'static,
+    E::Output: CastFrom<Element> + 'static,
 {
     fn track(&self) {
         self.0.track();

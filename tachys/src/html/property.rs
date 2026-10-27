@@ -2,6 +2,8 @@ use super::attribute::{
     Attribute, NextAttribute,
     maybe_next_attr_erasure_macros::next_attr_output_type,
 };
+#[cfg(feature = "native")]
+use crate::renderer::native::PropertyValue as JsValue;
 use crate::{
     html::attribute::{
         NamedAttributeKey, maybe_next_attr_erasure_macros::next_attr_combine,
@@ -11,6 +13,7 @@ use crate::{
 };
 use send_wrapper::SendWrapper;
 use std::{borrow::Cow, sync::Arc};
+#[cfg(not(feature = "native"))]
 use wasm_bindgen::JsValue;
 
 /// Creates an [`Attribute`] that will set a DOM property on an element.

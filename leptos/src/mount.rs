@@ -5,6 +5,8 @@ use any_spawner::Executor;
 use reactive_graph::owner::Owner;
 #[cfg(debug_assertions)]
 use std::cell::Cell;
+#[cfg(feature = "native")]
+use tachys::renderer::types::Element as HtmlElement;
 use tachys::{
     dom::body,
     view::{Mountable, Render},
@@ -16,6 +18,7 @@ use tachys::{
 };
 #[cfg(feature = "hydrate")]
 use wasm_bindgen::JsCast;
+#[cfg(not(feature = "native"))]
 use web_sys::HtmlElement;
 
 #[cfg(feature = "hydrate")]

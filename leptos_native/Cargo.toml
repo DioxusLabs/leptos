@@ -1,0 +1,26 @@
+[package]
+name = "leptos_native"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+leptos = { path = "../leptos", features = ["native"] }
+any_spawner = { path = "../any_spawner" }
+blitz-dom = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, features = ["system-fonts"] }
+blitz-html = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false }
+blitz-shell = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false }
+blitz-paint = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false }
+blitz-traits = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30" }
+anyrender = "0.14"
+anyrender_vello_cpu = { version = "0.18", features = ["softbuffer_window_renderer"] }
+peniko = "0.6"
+png = "0.18"
+
+[dev-dependencies]
+counter = { path = "../examples/counter" }
+
+[workspace]
+
+[profile.dev]
+debug = 0
