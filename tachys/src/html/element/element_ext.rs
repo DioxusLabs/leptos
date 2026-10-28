@@ -5,10 +5,11 @@ use crate::{
         event::{EventDescriptor, on},
         style::IntoStyle,
     },
-    renderer::RemoveEventHandler,
+    renderer::{
+        types::{Element, Event as JsValue},
+        RemoveEventHandler,
+    },
 };
-use wasm_bindgen::JsValue;
-use web_sys::Element;
 
 /// Extends an HTML element, allowing you to add attributes and children to the
 /// element's built state at runtime, with a similar API to how they

@@ -3,7 +3,14 @@ use std::{borrow::Cow, fmt::Debug, marker::PhantomData};
 use wasm_bindgen::JsValue;
 
 /// A DOM renderer.
+#[cfg(not(feature = "native"))]
 pub mod dom;
+#[cfg(feature = "native")]
+/// A renderer backed by a scoped Blitz document.
+pub mod native;
+#[cfg(feature = "native")]
+/// Native implementation of the DOM renderer interface.
+pub use native as dom;
 
 /// The renderer being used for the application.
 ///
@@ -17,7 +24,11 @@ pub mod dom;
 /// future, so to the extent possible the rest of the crate tries to stick to using
 /// [`Renderer`].
 /// methods rather than directly manipulating the DOM inline.
+#[cfg(not(feature = "native"))]
 pub type Rndr = dom::Dom;
+#[cfg(feature = "native")]
+/// The renderer used for native applications.
+pub type Rndr = native::NativeDom;
 
 /// Types used by the renderer.
 ///

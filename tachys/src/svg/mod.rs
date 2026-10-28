@@ -71,7 +71,10 @@ macro_rules! svg_elements {
 				}
 
                 impl ElementType for [<$tag:camel>] {
+                    #[cfg(not(feature = "native"))]
                     type Output = web_sys::SvgElement;
+                    #[cfg(feature = "native")]
+                    type Output = crate::renderer::types::Element;
 
                     const TAG: &'static str = stringify!($tag);
                     const SELF_CLOSING: bool = false;
@@ -177,7 +180,10 @@ where {
 pub struct Use;
 
 impl ElementType for Use {
+    #[cfg(not(feature = "native"))]
     type Output = web_sys::SvgElement;
+    #[cfg(feature = "native")]
+    type Output = crate::renderer::types::Element;
 
     const TAG: &'static str = "use";
     const SELF_CLOSING: bool = false;

@@ -390,6 +390,7 @@ where
         }
         position.set(Position::NextChild);
 
+        #[cfg(not(feature = "native"))]
         if let Some(on_hydrate) = self.on_hydrate {
             use crate::{
                 hydration::failed_to_cast_element, renderer::CastFrom,

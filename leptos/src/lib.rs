@@ -162,13 +162,19 @@ pub mod prelude {
     // In the future, maybe we should remove this blanket export
     // However, it is definitely useful relative to looking up every struct etc.
     mod export_types {
+        #[cfg(not(feature = "native"))]
+        pub use crate::form::*;
         pub use crate::{
             callback::*, children::*, component::*, control_flow::*, error::*,
-            form::*, hydration::*, into_view::*, mount::*, nonce::*,
-            suspense::*, text_prop::*,
+            hydration::*, into_view::*, mount::*, nonce::*, suspense::*,
+            text_prop::*,
         };
         pub use leptos_config::*;
         pub use leptos_dom::helpers::*;
+        #[cfg(feature = "native")]
+        pub use tachys::dom::{
+            event_target, event_target_checked, event_target_value,
+        };
         pub use leptos_macro::*;
         pub use leptos_server::*;
         pub use oco_ref::*;
@@ -185,6 +191,10 @@ pub mod prelude {
             self,
             error::{FromServerFnError, ServerFnError, ServerFnErrorErr},
         };
+        #[cfg(feature = "native")]
+        pub use tachys::renderer::native::{
+            WindowListenerHandle, location_hash, window_event_listener,
+        };
         pub use tachys::{
             reactive_graph::{Suspend, bind::BindAttribute, node_ref::*},
             view::{fragment::Fragment, template::ViewTemplate},
@@ -194,6 +204,7 @@ pub mod prelude {
 }
 
 /// Components used for working with HTML forms, like `<ActionForm>`.
+#[cfg(not(feature = "native"))]
 pub mod form;
 
 /// A standard way to wrap functions and closures to pass them to components.

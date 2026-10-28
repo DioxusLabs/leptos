@@ -1,0 +1,97 @@
+[package]
+name = "leptos_native"
+version = "0.1.0"
+authors = ["Greg Johnston"]
+license = "MIT"
+repository = "https://github.com/leptos-rs/leptos"
+homepage = "https://leptos.dev/"
+description = "Native Blitz host for Leptos applications."
+edition.workspace = true
+rust-version = "1.91.0"
+publish = false
+
+[features]
+native = ["svg", "dep:leptos", "dep:any_spawner", "dep:blitz-dom", "dep:blitz-html", "dep:blitz-shell", "dep:blitz-paint", "dep:blitz-traits", "dep:anyrender", "dep:anyrender_vello_cpu", "dep:peniko", "dep:png", "dep:cfg-if"]
+svg = ["blitz-dom?/svg", "blitz-paint?/svg"]
+auto-launch = ["native", "dep:inventory"]
+
+# Renderer features. Native alone uses Vello CPU with softbuffer.
+vello = ["native", "dep:anyrender_vello", "dep:wgpu_context"]
+vello-hybrid = ["native", "dep:anyrender_vello_hybrid", "dep:wgpu_context"]
+skia = ["native", "dep:anyrender_skia"]
+skia-pixels = ["skia-raster-base", "anyrender_skia/pixels_window_renderer"]
+skia-softbuffer = ["skia-raster-base", "anyrender_skia/softbuffer_window_renderer"]
+skia-raster-base = ["native", "dep:anyrender_skia"]
+vello-cpu = ["vello-cpu-pixels"]
+vello-cpu-pixels = ["vello-cpu-base", "anyrender_vello_cpu/pixels_window_renderer"]
+vello-cpu-softbuffer = ["vello-cpu-base", "anyrender_vello_cpu/softbuffer_window_renderer"]
+vello-cpu-base = ["native"]
+
+[dependencies]
+inventory = { workspace = true, optional = true }
+leptos = { workspace = true, features = ["native"], optional = true }
+any_spawner = { workspace = true, optional = true }
+blitz-dom = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, features = ["system-fonts", "floats", "parallel-construct"], optional = true }
+blitz-html = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, optional = true }
+blitz-shell = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, features = ["data-uri"], optional = true }
+blitz-paint = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", default-features = false, optional = true }
+blitz-traits = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", optional = true }
+anyrender = { version = "0.14", optional = true }
+anyrender_vello_cpu = { version = "0.18", features = ["multithreading", "softbuffer_window_renderer"], optional = true }
+anyrender_vello = { version = "0.15", optional = true }
+anyrender_vello_hybrid = { version = "0.11", optional = true }
+anyrender_skia = { version = "0.12", optional = true }
+wgpu_context = { version = "0.10", optional = true }
+cfg-if = { version = "1", optional = true }
+peniko = { version = "0.6", optional = true }
+png = { version = "0.18", optional = true }
+
+[dev-dependencies]
+counter = { path = "../examples/counter" }
+counters = { path = "../examples/counters" }
+js-framework-benchmark-leptos = { path = "../examples/js-framework-benchmark" }
+todomvc = { path = "../examples/todomvc", features = ["native"] }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--generate-link-to-definition"]
+
+[[example]]
+name = "counter"
+required-features = ["native"]
+
+[[example]]
+name = "counters"
+required-features = ["native"]
+
+[[example]]
+name = "js_framework_benchmark"
+required-features = ["native"]
+
+[[example]]
+name = "todomvc"
+required-features = ["native"]
+
+[[test]]
+name = "counter"
+required-features = ["native"]
+
+[[test]]
+name = "counters"
+required-features = ["native"]
+
+[[test]]
+name = "js_framework_benchmark"
+required-features = ["native"]
+
+[[test]]
+name = "todomvc"
+required-features = ["native"]
+
+[[test]]
+name = "runtime"
+required-features = ["native"]
+
+[[test]]
+name = "entrypoint"
+required-features = ["auto-launch"]

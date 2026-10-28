@@ -110,7 +110,10 @@ macro_rules! mathml_elements {
 				}
 
                 impl ElementType for [<$tag:camel>] {
+                    #[cfg(not(feature = "native"))]
                     type Output = web_sys::Element;
+                    #[cfg(feature = "native")]
+                    type Output = crate::renderer::types::Element;
 
                     const TAG: &'static str = stringify!($tag);
                     const SELF_CLOSING: bool = false;

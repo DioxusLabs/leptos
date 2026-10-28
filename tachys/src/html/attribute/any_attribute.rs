@@ -381,11 +381,12 @@ impl Attribute for Vec<AnyAttribute> {
                         Rndr::set_inner_html(&old.el, "");
                     }
                     NamedAttributeKey::Property(prop_name) => {
-                        Rndr::set_property(
-                            &old.el,
-                            &prop_name,
-                            &wasm_bindgen::JsValue::UNDEFINED,
-                        );
+                        #[cfg(not(feature = "native"))]
+                        let undefined = wasm_bindgen::JsValue::UNDEFINED;
+                        #[cfg(feature = "native")]
+                        let undefined =
+                            crate::renderer::native::PropertyValue::UNDEFINED;
+                        Rndr::set_property(&old.el, &prop_name, &undefined);
                     }
                     NamedAttributeKey::Attribute(key) => {
                         Rndr::remove_attribute(&old.el, &key);

@@ -1,3 +1,4 @@
+use crate::renderer::types::{Element, Node, Placeholder as Comment, Text};
 use crate::{
     renderer::{CastFrom, Rndr},
     view::{Position, PositionState},
@@ -5,7 +6,6 @@ use crate::{
 #[cfg(any(debug_assertions, leptos_debuginfo))]
 use std::cell::Cell;
 use std::{cell::RefCell, panic::Location, rc::Rc};
-use web_sys::{Comment, Element, Node, Text};
 
 #[cfg(feature = "mark_branches")]
 const COMMENT_NODE: u16 = 8;
@@ -154,6 +154,7 @@ pub(crate) fn set_currently_hydrating(
     }
 }
 
+#[cfg_attr(feature = "native", allow(unused_variables))]
 pub(crate) fn failed_to_cast_element(tag_name: &str, node: Node) -> Element {
     #[cfg(not(any(debug_assertions, leptos_debuginfo)))]
     {
@@ -166,6 +167,7 @@ pub(crate) fn failed_to_cast_element(tag_name: &str, node: Node) -> Element {
             .take()
             .map(|n| n.to_string())
             .unwrap_or_else(|| "{unknown}".to_string());
+        #[cfg(not(feature = "native"))]
         web_sys::console::error_3(
             &wasm_bindgen::JsValue::from_str(&format!(
                 "A hydration error occurred while trying to hydrate an \
@@ -186,6 +188,7 @@ pub(crate) fn failed_to_cast_element(tag_name: &str, node: Node) -> Element {
     }
 }
 
+#[cfg_attr(feature = "native", allow(unused_variables))]
 pub(crate) fn failed_to_cast_marker_node(node: Node) -> Comment {
     #[cfg(not(any(debug_assertions, leptos_debuginfo)))]
     {
@@ -198,6 +201,7 @@ pub(crate) fn failed_to_cast_marker_node(node: Node) -> Comment {
             .take()
             .map(|n| n.to_string())
             .unwrap_or_else(|| "{unknown}".to_string());
+        #[cfg(not(feature = "native"))]
         web_sys::console::error_3(
             &wasm_bindgen::JsValue::from_str(&format!(
                 "A hydration error occurred while trying to hydrate an \
@@ -218,6 +222,7 @@ pub(crate) fn failed_to_cast_marker_node(node: Node) -> Comment {
     }
 }
 
+#[cfg_attr(feature = "native", allow(unused_variables))]
 pub(crate) fn failed_to_cast_text_node(node: Node) -> Text {
     #[cfg(not(any(debug_assertions, leptos_debuginfo)))]
     {
@@ -230,6 +235,7 @@ pub(crate) fn failed_to_cast_text_node(node: Node) -> Text {
             .take()
             .map(|n| n.to_string())
             .unwrap_or_else(|| "{unknown}".to_string());
+        #[cfg(not(feature = "native"))]
         web_sys::console::error_3(
             &wasm_bindgen::JsValue::from_str(&format!(
                 "A hydration error occurred while trying to hydrate an \

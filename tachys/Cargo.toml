@@ -10,6 +10,8 @@ rust-version.workspace = true
 edition.workspace = true
 
 [dependencies]
+blitz-dom = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", optional = true, default-features = false }
+blitz-traits = { git = "https://github.com/DioxusLabs/blitz", rev = "fe33b778baaef5375d941c8a4f491f62cbd31d30", optional = true }
 throw_error = { workspace = true }
 any_spawner = { workspace = true, optional = true }
 const_str_slice_concat = { workspace = true }
@@ -175,6 +177,7 @@ wasm-bindgen-test = { workspace = true, default-features = true }
 rustc_version = { workspace = true, default-features = true }
 
 [features]
+native = ["dep:blitz-dom", "dep:blitz-traits", "dep:any_spawner"]
 default = ["testing"]
 delegation = []                                                       # enables event delegation
 error-hook = []
